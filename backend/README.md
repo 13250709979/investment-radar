@@ -18,6 +18,13 @@ Spring Boot 后端项目的编译、启动、测试与 Git 提交流程。
 - Spring Web
 - Validation
 - Lombok
+- PostgreSQL + MyBatis-Plus
+
+## 文档
+
+- [API 接口文档（含测试）](docs/api.md)
+- [PostgreSQL 部署](docs/postgresql-docker.md)
+- [Research MVP 设计](docs/Investment-Radar-Research-MVP.md)
 
 ## 1. 编译
 
@@ -77,18 +84,25 @@ mvn test
 
 ### 接口测试（需服务已启动）
 
+详见 [API 接口文档](docs/api.md)，快速验证：
+
 ```powershell
-# PowerShell
+# 健康检查
 Invoke-RestMethod -Uri http://localhost:8080/health
 
-# 或浏览器访问
-# http://localhost:8080/health
+# 创建研究任务
+$body = @{ companyName = "隆基绿能"; stockCode = "601012" } | ConvertTo-Json
+Invoke-RestMethod -Uri http://localhost:8080/api/research -Method Post -ContentType "application/json" -Body $body
 ```
 
-预期响应：
+预期 `/health` 响应：
 
 ```json
-{"status":"UP"}
+{
+  "code": 200,
+  "message": "success",
+  "data": { "status": "UP" }
+}
 ```
 
 ## 4. Git 提交
@@ -135,6 +149,7 @@ git commit -m "feat: 初始化 Spring Boot 后端并添加 /health 接口"
 |------|------|
 | `pom.xml` | Maven 配置（Web、Validation、Lombok） |
 | `src/main/java/com/investmentradar/BackendApplication.java` | 启动类 |
-| `src/main/java/com/investmentradar/HealthController.java` | `GET /health` 健康检查 |
-| `src/test/java/com/investmentradar/BackendApplicationTests.java` | 上下文加载测试 |
-| `src/main/resources/application.properties` | 应用配置（端口 8080） |
+| `src/main/java/com/investmentradar/controller/` | REST 接口 |
+| `src/test/java/com/investmentradar/ResearchControllerTest.java` | Research 接口测试 |
+| `src/main/resources/application.yml` | 应用配置（端口 8080、数据库） |
+| `docs/api.md` | API 接口文档 |

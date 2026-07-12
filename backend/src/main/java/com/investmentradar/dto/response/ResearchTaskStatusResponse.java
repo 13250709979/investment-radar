@@ -5,10 +5,12 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class HealthData {
+public class ResearchTaskStatusResponse {
+
+	private String taskId;
 
 	private String status;
 
-	private String database;
+	private Integer progress;
 
 }
