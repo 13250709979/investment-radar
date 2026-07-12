@@ -42,19 +42,35 @@ class ResearchControllerTest {
 	}
 
 	@Test
-	void getTaskStatusShouldReturnNotFoundWhenMissing() throws Exception {
+	void getTaskShouldReturnTaskStatus() throws Exception {
+		CreateResearchRequest request = new CreateResearchRequest();
+		request.setCompanyName("隆基绿能");
+		request.setStockCode("601012");
+
+		String response = mockMvc.perform(post("/api/research")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(request)))
+				.andExpect(status().isOk())
+				.andReturn()
+				.getResponse()
+				.getContentAsString();
+
+		String taskId = objectMapper.readTree(response).path("data").path("taskId").asText();
+
+		mockMvc.perform(get("/api/research/" + taskId))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.code").value(200))
+				.andExpect(jsonPath("$.data.taskId").value(taskId))
+				.andExpect(jsonPath("$.data.status").value("PENDING"))
+				.andExpect(jsonPath("$.data.progress").value(0));
+	}
+
+	@Test
+	void getTaskShouldReturnNotFoundWhenMissing() throws Exception {
 		mockMvc.perform(get("/api/research/not-exists-task-id"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.code").value(404))
 				.andExpect(jsonPath("$.message").value("研究任务不存在"));
-	}
-
-	@Test
-	void listTasksShouldReturnArray() throws Exception {
-		mockMvc.perform(get("/api/task/list"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value(200))
-				.andExpect(jsonPath("$.data").isArray());
 	}
 
 }

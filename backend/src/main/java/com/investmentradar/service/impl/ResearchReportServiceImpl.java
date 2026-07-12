@@ -7,16 +7,14 @@ import com.investmentradar.entity.ResearchReport;
 import com.investmentradar.exception.BusinessException;
 import com.investmentradar.mapper.ResearchReportMapper;
 import com.investmentradar.service.ResearchReportService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ResearchReportServiceImpl implements ResearchReportService {
 
-	private final ResearchReportMapper researchReportMapper;
-
-	public ResearchReportServiceImpl(ResearchReportMapper researchReportMapper) {
-		this.researchReportMapper = researchReportMapper;
-	}
+	@Autowired
+	private ResearchReportMapper researchReportMapper;
 
 	@Override
 	public ResearchReportResponse getReportByTaskId(String taskId) {
