@@ -238,7 +238,60 @@ AnnouncementRepository → PostgreSQL
 
 ---
 
-## 二、开发记录
+## 二、AI 分析（规划中）
+
+> 模块目录：`ai/`，与 `crawler/` 完全解耦。完整设计见 [05-AI-Service.md](05-AI-Service.md)。
+
+### 2.1 流程
+
+```text
+announcement (ai_status=0)
+    + announcement_content (parse_status=1)
+        │
+        ▼
+读取待分析数据 → PromptBuilder → LLM → JSON
+        │
+        ▼
+JsonParser → ai_analysis → 更新 ai_status=1
+```
+
+### 2.2 前置条件
+
+1. 已采集公告（`announcement`）
+2. 已解析 PDF（`announcement_content.parse_status=1`）
+3. 已建 `ai_analysis` 表
+4. 配置 `ai/.env`（参考 `ai/.env.example`）
+
+### 2.3 配置
+
+```env
+MODEL_PROVIDER=DeepSeek
+BASE_URL=https://api.deepseek.com/v1
+MODEL_NAME=deepseek-chat
+API_KEY=your_api_key_here
+PROMPT_VERSION=v1.0
+AI_BATCH_SIZE=20
+```
+
+### 2.4 执行命令（待实现）
+
+```powershell
+# 建 ai_analysis 表（首次）
+.\ai\scripts\init_ai_db.ps1
+
+# 批量分析（每批 20 条）
+.\ai\run.ps1 -Limit 20
+```
+
+### 2.5 验证（待实现）
+
+```powershell
+docker exec -it postgres psql -U postgres -d investment_radar -c "SELECT company_code, event_type, sentiment, summary FROM investment_radar.ai_analysis LIMIT 5;"
+```
+
+---
+
+## 三、开发记录
 
 ### 2026-07-13 公告采集模块
 
@@ -255,10 +308,20 @@ AnnouncementRepository → PostgreSQL
 | 新增 | PDF 下载解析：`main_pdf.py` + PyMuPDF |
 | 验证 | 601012 下载解析 2 条 PDF，parse_status=1 |
 
+### 2026-07-14 AI 分析模块设计
+
+| 事项 | 内容 |
+|------|------|
+| 文档 | 完成 [05-AI-Service.md](05-AI-Service.md) V1 设计 |
+| 目录 | `ai/` 独立模块，8 个 Task 开发顺序 |
+| 原则 | 与 Crawler 解耦，OpenAI Compatible API，JSON 输出 |
+| Prompt | v1.0，详见 [11-Prompts.md](11-Prompts.md) |
+| 配置 | `ai/.env.example` 模板 |
+
 ### 下一步
 
 - [x] PDF 下载与正文解析 → `announcement_content`
-- [ ] AI 分析 → `ai_analysis`
+- [ ] AI 分析 → `ai_analysis`（设计完成，待开发）
 - [ ] 与 Spring Boot Research Worker 联动
 
 ---
@@ -267,6 +330,8 @@ AnnouncementRepository → PostgreSQL
 
 | 文档 | 说明 |
 |------|------|
+| [05-AI-Service.md](05-AI-Service.md) | AI 分析模块设计 |
+| [11-Prompts.md](11-Prompts.md) | Prompt 模板 |
 | [12-Crawler.md](12-Crawler.md) | Crawler 技术设计 |
 | [02-Database.md](02-Database.md) | 数据库表结构 |
 | [04-Research-Workflow.md](04-Research-Workflow.md) | 业务流程 |

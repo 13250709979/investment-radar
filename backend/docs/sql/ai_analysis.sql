@@ -1,11 +1,13 @@
 -- =============================================
 -- Project  : Investment Radar
 -- Database : investment_radar
--- Schema   : investment
+-- Schema   : investment_radar
 -- Table    : ai_analysis
 -- Description : AI分析结果
 -- PostgreSQL 16+
 -- =============================================
+
+CREATE SCHEMA IF NOT EXISTS investment_radar;
 
 CREATE TABLE IF NOT EXISTS investment_radar.ai_analysis
 (
