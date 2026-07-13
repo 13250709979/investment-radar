@@ -32,6 +32,28 @@ cd crawler
 
 完整部署与排错见 [13-Operation-Log.md](13-Operation-Log.md)。
 
+## PDF 下载解析
+
+```text
+announcement (pdf_download_status=0)
+        │
+        ▼
+下载 PDF
+        │
+        ▼
+PyMuPDF 解析
+        │
+        ▼
+写入 announcement_content
+        │
+        ▼
+更新 pdf_download_status=1, parse_status=1
+```
+
+```powershell
+.\crawler\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+```
+
 ## 目录结构
 
 ```text

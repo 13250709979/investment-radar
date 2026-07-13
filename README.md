@@ -34,3 +34,9 @@ AI 投资研究系统
 ```
 
 详见 [13-Operation-Log.md](docs/13-Operation-Log.md)。
+
+## PDF 下载解析
+
+```powershell
+.\crawler\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+```

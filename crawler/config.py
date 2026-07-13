@@ -19,3 +19,6 @@ CNINFO_STATIC_BASE = os.getenv(
 DEFAULT_PAGE_SIZE = int(os.getenv("CRAWLER_PAGE_SIZE", "30"))
 REQUEST_TIMEOUT = int(os.getenv("CRAWLER_REQUEST_TIMEOUT", "30"))
 REQUEST_RETRY = int(os.getenv("CRAWLER_REQUEST_RETRY", "3"))
+
+PDF_STORAGE_DIR = os.getenv("PDF_STORAGE_DIR", os.path.join(os.path.dirname(__file__), "data", "pdf"))
+PARSER_NAME = "PyMuPDF"

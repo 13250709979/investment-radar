@@ -33,6 +33,22 @@ cd crawler
 .\crawler\run.ps1 -StockCode 601012 -CompanyName 隆基绿能 -MaxPages 1
 ```
 
+### PDF 下载解析
+
+```powershell
+# 建 announcement_content 表（首次）
+.\crawler\scripts\init_content_db.ps1
+
+# 下载并解析 PDF（处理 pdf_download_status=0 的记录）
+.\crawler\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+```
+
+```powershell
+# 等价命令
+cd crawler
+.\.venv\Scripts\python main_pdf.py --company-code 601012 --limit 10
+```
+
 ### 首次运行前（只需一次）
 
 ```powershell
@@ -132,27 +148,68 @@ docker exec -it postgres psql -U postgres -d investment_radar -c "SELECT company
 
 ```text
 crawler/
-├── main.py                         # 入口
-├── run.ps1                         # 一键运行
-├── config.py                       # 配置
-├── database.py                     # 数据库连接
+├── main.py                         # 公告采集入口
+├── main_pdf.py                     # PDF 下载解析入口
+├── run.ps1                         # 一键采集
+├── run_pdf.ps1                     # 一键 PDF 解析
+├── config.py
+├── database.py
 ├── requirements.txt
 ├── scripts/
-│   └── init_db.ps1                 # 建表脚本
+│   ├── init_db.ps1                 # 建 announcement 表
+│   └── init_content_db.ps1         # 建 announcement_content 表
 ├── spider/
-│   └── cninfo_spider.py            # 巨潮接口请求
+│   └── cninfo_spider.py
+├── parser/
+│   └── pdf_parser.py               # PyMuPDF 解析
 ├── entity/
-│   └── announcement.py             # JSON → Entity
+│   ├── announcement.py
+│   ├── pending_announcement.py
+│   └── announcement_content.py
 ├── service/
-│   └── announcement_service.py     # 采集编排
+│   ├── announcement_service.py
+│   └── pdf_service.py              # PDF 下载解析编排
 ├── repository/
-│   └── announcement_repository.py  # 数据入库
+│   ├── announcement_repository.py
+│   └── announcement_content_repository.py
 └── utils/
-    ├── http_util.py                # HTTP 请求
-    └── orgid_util.py               # orgId 查询
+    ├── http_util.py
+    ├── orgid_util.py
+    └── pdf_util.py                 # PDF 下载
 ```
 
-### 1.6 采集流程
+### 1.6 PDF 下载解析流程
+
+```text
+announcement (pdf_download_status=0)
+        │
+        ▼
+下载 PDF → crawler/data/pdf/{股票代码}/
+        │
+        ▼
+PyMuPDF 解析
+        │
+        ▼
+写入 announcement_content (parse_status=1)
+        │
+        ▼
+更新 announcement.pdf_download_status=1
+```
+
+**执行命令**
+
+```powershell
+.\crawler\scripts\init_content_db.ps1
+.\crawler\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+```
+
+**验证解析结果**
+
+```powershell
+docker exec -it postgres psql -U postgres -d investment_radar -c "SELECT a.company_code, a.title, c.page_count, c.parse_status, LEFT(c.content, 50) FROM investment_radar.announcement_content c JOIN investment_radar.announcement a ON a.id = c.announcement_id LIMIT 5;"
+```
+
+### 1.7 采集流程
 
 ```text
 main.py / run.ps1
@@ -170,7 +227,7 @@ Announcement Entity 转换
 AnnouncementRepository → PostgreSQL
 ```
 
-### 1.7 常见问题
+### 1.8 常见问题
 
 | 问题 | 原因 | 解决 |
 |------|------|------|
@@ -195,10 +252,12 @@ AnnouncementRepository → PostgreSQL
 | 修复 | 请求参数简化为 `stock` + `pageNum` + `pageSize` |
 | 修复 | `AnnouncementService.__init__` 中 `company_name` 未定义 |
 | 验证 | 601012 隆基绿能，抓取 30 条，入库 30 条 |
+| 新增 | PDF 下载解析：`main_pdf.py` + PyMuPDF |
+| 验证 | 601012 下载解析 2 条 PDF，parse_status=1 |
 
 ### 下一步
 
-- [ ] PDF 下载与正文解析 → `announcement_content`
+- [x] PDF 下载与正文解析 → `announcement_content`
 - [ ] AI 分析 → `ai_analysis`
 - [ ] 与 Spring Boot Research Worker 联动
 

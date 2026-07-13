@@ -1,8 +1,10 @@
 import logging
 from datetime import datetime
+from typing import List, Optional
 
 from database import get_cursor
 from entity.announcement import Announcement
+from entity.pending_announcement import PendingAnnouncement
 
 logger = logging.getLogger(__name__)
 
@@ -89,3 +91,48 @@ class AnnouncementRepository:
             )
             row = cursor.fetchone()
             return row[0] if row else 0
+
+    def find_pending_pdf(
+        self, limit: int = 50, company_code: Optional[str] = None
+    ) -> List[PendingAnnouncement]:
+        sql = """
+            SELECT id, announcement_id, company_code, company_name,
+                   title, adjunct_url, adjunct_size, publish_time
+            FROM announcement
+            WHERE pdf_download_status = 0 AND deleted = FALSE
+        """
+        params: list = []
+        if company_code:
+            sql += " AND company_code = %s"
+            params.append(company_code)
+        sql += " ORDER BY publish_time DESC LIMIT %s"
+        params.append(limit)
+
+        with get_cursor(dict_cursor=True) as cursor:
+            cursor.execute(sql, params)
+            rows = cursor.fetchall()
+
+        return [
+            PendingAnnouncement(
+                id=row["id"],
+                announcement_id=row["announcement_id"],
+                company_code=row["company_code"],
+                company_name=row["company_name"],
+                title=row["title"],
+                adjunct_url=row["adjunct_url"],
+                adjunct_size=row["adjunct_size"],
+                publish_time=row["publish_time"],
+            )
+            for row in rows
+        ]
+
+    def update_pdf_status(self, announcement_pk: int, status: int) -> None:
+        with get_cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE announcement
+                SET pdf_download_status = %s, update_time = %s
+                WHERE id = %s
+                """,
+                (status, datetime.now(), announcement_pk),
+            )

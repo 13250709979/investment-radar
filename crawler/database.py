@@ -63,11 +63,35 @@ def check_announcement_table() -> bool:
         if exists:
             return True
         logger.error(
-            "表 %s.announcement 不存在，请先执行建表 SQL：\n"
-            "  Get-Content backend/docs/sql/announcement.sql | docker exec -i postgres psql -U postgres -d investment_radar",
+            "表 %s.announcement 不存在，请先执行：\n"
+            "  .\\crawler\\scripts\\init_db.ps1",
             DB_SCHEMA,
         )
         return False
     except Exception as exc:
         logger.error("检查 announcement 表失败: %s", exc)
+        return False
+
+
+def check_announcement_content_table() -> bool:
+    try:
+        with get_cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT 1 FROM information_schema.tables
+                WHERE table_schema = %s AND table_name = 'announcement_content'
+                """,
+                (DB_SCHEMA,),
+            )
+            exists = cursor.fetchone() is not None
+        if exists:
+            return True
+        logger.error(
+            "表 %s.announcement_content 不存在，请先执行：\n"
+            "  .\\crawler\\scripts\\init_content_db.ps1",
+            DB_SCHEMA,
+        )
+        return False
+    except Exception as exc:
+        logger.error("检查 announcement_content 表失败: %s", exc)
         return False
