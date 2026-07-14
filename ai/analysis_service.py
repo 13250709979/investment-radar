@@ -10,7 +10,7 @@ from ai_repository import AiRepository
 from announcement_reader import AnnouncementReader
 from config import MODEL_NAME, MODEL_PROVIDER
 from json_parser import JsonParseError, JsonParser
-from llm_client import LLMClient, LLMResponse
+from llm_client import LLMClient, LLMError, LLMResponse
 from prompt_builder import PromptBuilder
 from retry_manager import RetryManager
 
@@ -99,6 +99,19 @@ class AnalysisService:
                     cost,
                     exc,
                 )
+            except LLMError as exc:
+                last_error = str(exc)
+                cost = time.perf_counter() - started
+                logger.error(
+                    "LLM 调用失败 attempt=%s/%s id=%s cost=%.1fs err=%s",
+                    attempt,
+                    self.retry_manager.attempts(),
+                    announcement_id,
+                    cost,
+                    exc,
+                )
+                if not exc.retryable:
+                    break
             except Exception as exc:  # noqa: BLE001 - 单条失败不影响批次
                 last_error = str(exc)
                 cost = time.perf_counter() - started

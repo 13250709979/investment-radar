@@ -7,10 +7,13 @@ _AI_DIR = Path(__file__).resolve().parent
 load_dotenv(_AI_DIR / ".env")
 load_dotenv(_AI_DIR.parent / ".env", override=False)
 
-# 大模型
-MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "DeepSeek")
-BASE_URL = os.getenv("BASE_URL", "https://api.deepseek.com/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "deepseek-chat")
+# 大模型（默认 Google AI Studio / Gemini）
+MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "GoogleAIStudio")
+BASE_URL = os.getenv(
+    "BASE_URL",
+    "https://generativelanguage.googleapis.com/v1beta/openai",
+)
+MODEL_NAME = os.getenv("MODEL_NAME", "gemini-2.5-flash")
 API_KEY = os.getenv("API_KEY", "")
 
 # 数据库（与 crawler 共用）

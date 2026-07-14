@@ -1,5 +1,9 @@
 # 公告 AI 分析 - 一键运行
-# 用法: .\run.ps1 -CompanyCode 601012 -Limit 5 -Loops 1
+#
+# 在 ai 目录内:
+#   .\run.ps1 -CompanyCode 601012 -Limit 5
+# 在项目根目录:
+#   .\ai\run.ps1 -CompanyCode 601012 -Limit 5
 
 param(
     [string]$CompanyCode = "",
@@ -14,6 +18,7 @@ param(
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $ScriptDir
+Write-Host "工作目录: $ScriptDir" -ForegroundColor DarkGray
 
 if (-not (Test-Path ".\.env")) {
     if (Test-Path ".\.env.example") {
