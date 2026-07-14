@@ -7,9 +7,10 @@
 
 ## Phase 2 — AI 分析（进行中）
 
-- [ ] 公告 AI 分析 → `ai_analysis`
-- [ ] Prompt v1.0
-- [ ] 多模型支持（OpenAI Compatible）
+- [x] 公告 AI 分析模块代码 → `ai/`
+- [x] Prompt v1.0
+- [x] 多模型支持（OpenAI Compatible）
+- [ ] 联调验证 → 写入 `ai_analysis`
 
 ## Phase 3 — 研究报告
 

@@ -26,7 +26,7 @@ AI 投资研究系统
 |------|------|------|
 | Backend | `backend/` | Spring Boot API |
 | Crawler | `crawler/` | 巨潮公告采集 + PDF 解析 |
-| AI Service | `ai/` | 公告 AI 分析（开发中） |
+| AI Service | `ai/` | 公告 AI 分析 |
 | Frontend | 待建 | Web 界面 |
 
 ## 采集公告（快速执行）
@@ -41,4 +41,14 @@ AI 投资研究系统
 
 ```powershell
 .\crawler\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+```
+
+## 公告 AI 分析
+
+```powershell
+# 首次：复制环境变量并填写 API_KEY，初始化 ai_analysis 表
+Copy-Item .\ai\.env.example .\ai\.env
+.\ai\scripts\init_ai_db.ps1
+
+.\ai\run.ps1 -CompanyCode 601012 -Limit 5
 ```
