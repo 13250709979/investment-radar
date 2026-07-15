@@ -7,14 +7,8 @@ from dataclasses import dataclass
 
 import requests
 
-from config import (
-    AI_REQUEST_TIMEOUT,
-    API_KEY,
-    BASE_URL,
-    LLM_TEMPERATURE,
-    MODEL_NAME,
-    MODEL_PROVIDER,
-)
+import config as cfg
+from config import ModelConfig
 
 logger = logging.getLogger(__name__)
 
@@ -39,22 +33,31 @@ class LLMResponse:
 class LLMClient:
     def __init__(
         self,
-        base_url: str | None = None,
-        api_key: str | None = None,
-        model_name: str | None = None,
+        model: ModelConfig | None = None,
         temperature: float | None = None,
         timeout: int | None = None,
     ):
-        self.base_url = (base_url or BASE_URL).rstrip("/")
-        self.api_key = api_key if api_key is not None else API_KEY
-        self.model_name = model_name or MODEL_NAME
-        self.temperature = LLM_TEMPERATURE if temperature is None else temperature
-        self.timeout = AI_REQUEST_TIMEOUT if timeout is None else timeout
-        self.provider = MODEL_PROVIDER
+        if model is None:
+            self.model_id = cfg.ACTIVE_MODEL
+            self.provider = cfg.MODEL_PROVIDER
+            self.base_url = cfg.BASE_URL.rstrip("/")
+            self.api_key = cfg.API_KEY
+            self.model_name = cfg.MODEL_NAME
+        else:
+            self.model_id = model.id
+            self.provider = model.provider
+            self.base_url = model.base_url.rstrip("/")
+            self.api_key = model.api_key
+            self.model_name = model.model_name
+        self.temperature = cfg.LLM_TEMPERATURE if temperature is None else temperature
+        self.timeout = cfg.AI_REQUEST_TIMEOUT if timeout is None else timeout
 
     def analyze(self, prompt: str) -> LLMResponse:
         if not self.api_key:
-            raise LLMError("API_KEY 未配置，请在 ai/.env 中设置", retryable=False)
+            raise LLMError(
+                "API_KEY 未配置，请在 ai/.env 中设置对应模型的 API_KEY",
+                retryable=False,
+            )
 
         url = f"{self.base_url}/chat/completions"
         headers = {
@@ -69,7 +72,12 @@ class LLMClient:
             ],
         }
 
-        logger.debug("调用 LLM: provider=%s model=%s", self.provider, self.model_name)
+        logger.debug(
+            "调用 LLM: id=%s provider=%s model=%s",
+            self.model_id,
+            self.provider,
+            self.model_name,
+        )
         try:
             response = requests.post(
                 url, json=payload, headers=headers, timeout=self.timeout
@@ -104,15 +112,15 @@ class LLMClient:
         body = (response.text or "")[:500]
         if status == 401:
             return LLMError(
-                "API Key 无效或未授权（401）。请检查 ai/.env 中的 API_KEY。",
+                "API Key 无效或未授权（401）。请检查 ai/.env 中对应模型的 API_KEY。",
                 retryable=False,
                 status_code=status,
             )
         if status == 402:
             return LLMError(
                 "大模型账户余额不足或未开通付费（402 Payment Required）。"
-                f"当前提供商={self.provider}。请到对应平台充值，"
-                "或在 ai/.env 中切换到其他有余量的模型（BASE_URL / MODEL_NAME / API_KEY）。",
+                f"当前提供商={self.provider}（id={self.model_id}）。请到对应平台充值，"
+                "或切换 ACTIVE_MODEL / --model 到其他有余量的模型。",
                 retryable=False,
                 status_code=status,
             )

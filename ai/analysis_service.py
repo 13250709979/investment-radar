@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 
 from ai_repository import AiRepository
 from announcement_reader import AnnouncementReader
-from config import MODEL_NAME, MODEL_PROVIDER
 from json_parser import JsonParseError, JsonParser
 from llm_client import LLMClient, LLMError, LLMResponse
 from prompt_builder import PromptBuilder
@@ -60,7 +59,7 @@ class AnalysisService:
         announcement_id = item.get("id")
         logger.info("开始分析")
         logger.info("Announcement ID: %s", announcement_id)
-        logger.info("Model: %s", MODEL_PROVIDER)
+        logger.info("Model: %s (%s)", self.llm.provider, self.llm.model_name)
 
         prompt = PromptBuilder.build(item)
         prompt_version = PromptBuilder.version()
@@ -76,8 +75,8 @@ class AnalysisService:
                 self.repository.save_success(
                     item,
                     data,
-                    model_provider=MODEL_PROVIDER,
-                    model_name=MODEL_NAME,
+                    model_provider=self.llm.provider,
+                    model_name=self.llm.model_name,
                     prompt_version=prompt_version,
                     input_tokens=llm_resp.input_tokens,
                     output_tokens=llm_resp.output_tokens,
@@ -131,8 +130,8 @@ class AnalysisService:
             self.repository.save_failure(
                 item,
                 last_error or "unknown error",
-                model_provider=MODEL_PROVIDER,
-                model_name=MODEL_NAME,
+                model_provider=self.llm.provider,
+                model_name=self.llm.model_name,
                 prompt_version=prompt_version,
                 input_tokens=last_usage.input_tokens,
                 output_tokens=last_usage.output_tokens,

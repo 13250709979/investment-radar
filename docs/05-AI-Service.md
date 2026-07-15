@@ -161,13 +161,15 @@ class LLMClient:
 
 | 提供商 | 说明 |
 |--------|------|
-| OpenAI | 官方 API |
-| DeepSeek | 默认推荐 |
+| GoogleAIStudio | 默认推荐（Gemini，AI Studio 有免费额度） |
+| SiliconFlow | 硅基流动免费模型 |
+| DeepSeek | 官方 API（需充值） |
 | Qwen | 通义千问 |
+| OpenAI | 官方 API |
 | Moonshot | 月之暗面 |
 | Claude | OpenAI Compatible 代理 |
 
-切换模型只改 `.env`，业务代码无需修改。
+切换模型：在 `.env` 中配置多组 `MODEL_<ID>_*`，用 `ACTIVE_MODEL` 或启动参数 `--model` 指定当前使用哪一组。业务代码无需修改。
 
 ---
 
@@ -175,12 +177,29 @@ class LLMClient:
 
 **文件：** `ai/.env`（参考 `ai/.env.example`）
 
+可同时配置多种模型，运行时只启用一种：
+
 ```env
-# 大模型
-MODEL_PROVIDER=DeepSeek
-BASE_URL=https://api.deepseek.com/v1
-MODEL_NAME=deepseek-chat
-API_KEY=xxxxxxxx
+# 当前使用哪一组（对应下方 MODEL_<ID>_ 的 <ID>）
+ACTIVE_MODEL=google
+
+# --- Google AI Studio / Gemini ---
+MODEL_GOOGLE_PROVIDER=GoogleAIStudio
+MODEL_GOOGLE_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+MODEL_GOOGLE_NAME=gemini-2.5-flash
+MODEL_GOOGLE_API_KEY=xxxxxxxx
+
+# --- 硅基流动（按需取消注释并填写）---
+# MODEL_SILICONFLOW_PROVIDER=SiliconFlow
+# MODEL_SILICONFLOW_BASE_URL=https://api.siliconflow.cn/v1
+# MODEL_SILICONFLOW_NAME=Qwen/Qwen2.5-7B-Instruct
+# MODEL_SILICONFLOW_API_KEY=sk-xxxx
+
+# --- DeepSeek ---
+# MODEL_DEEPSEEK_PROVIDER=DeepSeek
+# MODEL_DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+# MODEL_DEEPSEEK_NAME=deepseek-chat
+# MODEL_DEEPSEEK_API_KEY=sk-xxxx
 
 # 数据库（与 crawler 共用）
 DB_HOST=localhost
@@ -198,6 +217,17 @@ AI_MAX_CONTENT_LENGTH=12000
 AI_REQUEST_TIMEOUT=120
 LLM_TEMPERATURE=0.1
 ```
+
+**切换方式：**
+
+| 方式 | 示例 |
+|------|------|
+| `.env` | `ACTIVE_MODEL=deepseek` |
+| CLI | `python main.py --model siliconflow` |
+| PowerShell | `.\run.ps1 -Model deepseek` |
+| 列出已配置 | `python main.py --list-models` |
+
+每组模型需完整四项：`MODEL_<ID>_PROVIDER` / `_BASE_URL` / `_NAME` / `_API_KEY`。未配置任何命名模型时，仍兼容旧版扁平的 `MODEL_PROVIDER` / `BASE_URL` / `MODEL_NAME` / `API_KEY`。
 
 **禁止硬编码 API Key 和模型地址。**
 
@@ -292,8 +322,8 @@ WHERE id = ?;
 | `risk_warning` | LLM 返回 `riskWarning` |
 | `tags` | LLM 返回 `tags`（JSONB） |
 | `entities` | 可选，后续版本 |
-| `model_provider` | `.env` MODEL_PROVIDER |
-| `model_name` | `.env` MODEL_NAME |
+| `model_provider` | 当前活跃模型的 PROVIDER |
+| `model_name` | 当前活跃模型的 NAME |
 | `prompt_version` | `.env` PROMPT_VERSION |
 | `input_tokens` | LLM 返回用量 |
 | `output_tokens` | LLM 返回用量 |
@@ -433,7 +463,7 @@ ai_analysis
 4. 所有 AI 输出必须为 JSON，不允许 Markdown。
 5. JSON 解析必须有异常处理。
 6. 数据库更新采用事务，确保 `ai_analysis` 写入成功后再更新 `announcement.ai_status`。
-7. 所有模型配置通过 `.env` 管理，不允许硬编码。
+7. 所有模型配置通过 `.env` 管理（可配置多组，用 `ACTIVE_MODEL` / `--model` 选用其一），不允许硬编码。
 8. 所有异常必须记录日志，便于排查和重试。
 9. 后续支持新闻、政策等数据源时，只需修改 `data_type` 和 `data_id`，无需修改 AI 分析流程。
 
