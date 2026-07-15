@@ -1,5 +1,5 @@
 # 初始化 ai_analysis 表
-# 在项目根目录执行: .\ai\scripts\init_ai_db.ps1
+# 用法: .\ai\scripts\init_db.ps1
 
 $ErrorActionPreference = "Stop"
 $RootDir = Resolve-Path (Join-Path $PSScriptRoot "..\..")

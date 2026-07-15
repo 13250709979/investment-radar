@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 
-from config import AI_BATCH_SIZE, DB_SCHEMA
-from database import get_cursor
+from core.config import AI_BATCH_SIZE, DB_SCHEMA
+from core.database import get_cursor
 
 logger = logging.getLogger(__name__)
 

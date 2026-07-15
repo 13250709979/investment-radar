@@ -7,8 +7,8 @@ from dataclasses import dataclass
 
 import requests
 
-import config as cfg
-from config import ModelConfig
+import core.config as cfg
+from core.config import ModelConfig
 
 logger = logging.getLogger(__name__)
 

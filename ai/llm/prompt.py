@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from config import AI_MAX_CONTENT_LENGTH, PROMPT_VERSION
+from core.config import AI_MAX_CONTENT_LENGTH, PROMPT_VERSION
 
 ANNOUNCEMENT_PROMPT_V1 = """你是一名专业投资研究分析师。
 

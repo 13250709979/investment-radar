@@ -43,25 +43,26 @@ announcement_content
 ## 二、目录结构
 
 ```text
-investment-radar/
-│
-├── crawler/                    # 数据采集（独立）
-│
-├── ai/                         # AI 分析（独立）
-│   ├── main.py                 # 批量分析入口
-│   ├── config.py               # 配置（读取 .env）
-│   ├── database.py             # PostgreSQL 连接
-│   ├── prompt_builder.py       # Prompt 构造
-│   ├── llm_client.py           # 大模型统一封装
-│   ├── announcement_reader.py  # 读取待分析公告
-│   ├── analysis_service.py     # 分析编排
+ai/
+├── main.py                     # CLI 入口
+├── requirements.txt
+├── .env.example
+├── core/
+│   ├── config.py               # 多模型 + 数据库配置
+│   └── database.py             # PostgreSQL 连接
+├── service/
+│   └── analysis_service.py     # 分析编排
+├── llm/
+│   ├── client.py               # 大模型封装（OpenAI Compatible）
+│   ├── prompt.py               # Prompt 构造
 │   ├── json_parser.py          # JSON 解析与校验
-│   ├── ai_repository.py        # 写入 ai_analysis
-│   ├── retry_manager.py        # 失败重试
-│   ├── requirements.txt
-│   └── .env.example            # 配置模板
-│
-└── .env                        # 实际配置（不入库）
+│   └── retry.py                # 失败重试
+├── repository/
+│   ├── announcement_reader.py  # 读取待分析公告
+│   └── ai_repository.py        # 写入 ai_analysis
+└── scripts/
+    ├── run.ps1                 # 一键运行
+    └── init_db.ps1             # 初始化 ai_analysis 表
 ```
 
 ---
@@ -122,13 +123,13 @@ LIMIT 20;
 | `c.parse_status = 1` | PDF 已解析成功 |
 | `LIMIT 20` | 单批处理量，可通过 `AI_BATCH_SIZE` 配置 |
 
-**负责模块：** `announcement_reader.py`
+**负责模块：** `repository/announcement_reader.py`
 
 ---
 
 ## 五、Prompt Builder
 
-**文件：** `prompt_builder.py`
+**文件：** `llm/prompt.py`
 
 **职责：** 将公告标题 + 正文组装为 Prompt，禁止在业务代码中拼字符串。
 
@@ -146,7 +147,7 @@ Prompt 模板详见 [11-Prompts.md](11-Prompts.md)，当前版本 **v1.0**。
 
 ## 六、LLM Client
 
-**文件：** `llm_client.py`
+**文件：** `llm/client.py`
 
 统一封装所有模型调用，业务代码不直接调 API。
 
@@ -224,7 +225,7 @@ LLM_TEMPERATURE=0.1
 |------|------|
 | `.env` | `ACTIVE_MODEL=deepseek` |
 | CLI | `python main.py --model siliconflow` |
-| PowerShell | `.\run.ps1 -Model deepseek` |
+| PowerShell | `.\ai\scripts\run.ps1 -Model deepseek` |
 | 列出已配置 | `python main.py --list-models` |
 
 每组模型需完整四项：`MODEL_<ID>_PROVIDER` / `_BASE_URL` / `_NAME` / `_API_KEY`。未配置任何命名模型时，仍兼容旧版扁平的 `MODEL_PROVIDER` / `BASE_URL` / `MODEL_NAME` / `API_KEY`。
@@ -235,7 +236,7 @@ LLM_TEMPERATURE=0.1
 
 ## 八、Analysis Service
 
-**文件：** `analysis_service.py`
+**文件：** `service/analysis_service.py`
 
 **编排流程：**
 
@@ -261,7 +262,7 @@ for item in announcements:
 
 ## 九、JSON Parser
 
-**文件：** `json_parser.py`
+**文件：** `llm/json_parser.py`
 
 **原则：不信任 AI 返回，必须校验。**
 
@@ -283,7 +284,7 @@ except:
 
 ## 十、AI Repository
 
-**文件：** `ai_repository.py`
+**文件：** `repository/ai_repository.py`
 
 | 操作 | 目标 |
 |------|------|
@@ -359,7 +360,7 @@ WHERE id = ?;
 
 ## 十二、失败处理
 
-**文件：** `retry_manager.py`
+**文件：** `llm/retry.py`
 
 | 规则 | 说明 |
 |------|------|
@@ -403,13 +404,13 @@ WHERE id = ?;
 
 | Task | 模块 | 目标 |
 |------|------|------|
-| Task1 | `llm_client.py` | 完成模型调用 |
-| Task2 | `prompt_builder.py` | 完成 Prompt 生成 |
-| Task3 | `announcement_reader.py` | 读取待分析数据 |
-| Task4 | `analysis_service.py` | 完成完整流程 |
-| Task5 | `json_parser.py` | 完成 JSON 解析 |
-| Task6 | `ai_repository.py` | 保存数据库 |
-| Task7 | `retry_manager.py` | 失败重试 |
+| Task1 | `llm/client.py` | 完成模型调用 |
+| Task2 | `llm/prompt.py` | 完成 Prompt 生成 |
+| Task3 | `repository/announcement_reader.py` | 读取待分析数据 |
+| Task4 | `service/analysis_service.py` | 完成完整流程 |
+| Task5 | `llm/json_parser.py` | 完成 JSON 解析 |
+| Task6 | `repository/ai_repository.py` | 保存数据库 |
+| Task7 | `llm/retry.py` | 失败重试 |
 | Task8 | `main.py` | 批量分析入口 |
 
 ---

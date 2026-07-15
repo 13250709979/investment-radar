@@ -5,7 +5,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-_AI_DIR = Path(__file__).resolve().parent
+_AI_DIR = Path(__file__).resolve().parent.parent  # ai/
 load_dotenv(_AI_DIR / ".env")
 load_dotenv(_AI_DIR.parent / ".env", override=False)
 

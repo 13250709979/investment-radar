@@ -20,7 +20,7 @@ ai      → 读取上述表 → 写入 ai_analysis
 
 ## D-002：统一 OpenAI Compatible API
 
-**决策：** 所有大模型通过 `llm_client.py` 统一封装，兼容 OpenAI API 格式。
+**决策：** 所有大模型通过 `llm/client.py` 统一封装，兼容 OpenAI API 格式。
 
 **支持：** OpenAI、DeepSeek、Qwen、Moonshot、Claude（代理）
 
@@ -32,7 +32,7 @@ ai      → 读取上述表 → 写入 ai_analysis
 
 **决策：** Prompt 强制要求返回 JSON，禁止 Markdown 和解释性文字。
 
-**解析：** `json_parser.py` 校验，失败不更新 `announcement.ai_status`。
+**解析：** `llm/json_parser.py` 校验，失败不更新 `announcement.ai_status`。
 
 ---
 
@@ -48,7 +48,7 @@ ai      → 读取上述表 → 写入 ai_analysis
 
 **决策：** 数据库记录 `prompt_version`（如 v1.0），支持 Prompt 升级后重新分析历史数据。
 
-**管理：** 模板在 [11-Prompts.md](11-Prompts.md)，代码在 `prompt_builder.py`。
+**管理：** 模板在 [11-Prompts.md](11-Prompts.md)，代码在 `llm/prompt.py`。
 
 ---
 

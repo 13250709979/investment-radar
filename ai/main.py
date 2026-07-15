@@ -6,52 +6,54 @@ import argparse
 import logging
 import sys
 
-from analysis_service import AnalysisService
-from config import (
-    AI_BATCH_SIZE,
-    activate_model,
-    list_model_ids,
-)
-from database import check_ai_analysis_table, check_connection
-from llm_client import LLMClient
+from core.config import AI_BATCH_SIZE, activate_model, list_model_ids
+from core.database import check_ai_analysis_table, check_connection
+from llm.client import LLMClient
+from service.analysis_service import AnalysisService
 
 
 def setup_logging(verbose: bool) -> None:
-    level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
-        level=level,
+        level=logging.DEBUG if verbose else logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Investment Radar - 公告 AI 分析")
-    parser.add_argument(
-        "--model",
-        default="",
-        help="使用的模型 id（对应 .env 中 MODEL_<ID>_；覆盖 ACTIVE_MODEL）",
-    )
-    parser.add_argument(
-        "--list-models",
-        action="store_true",
-        help="列出 .env 中已配置的命名模型后退出",
-    )
-    parser.add_argument("--company-code", default="", help="仅分析指定股票代码")
-    parser.add_argument(
-        "--limit",
-        type=int,
-        default=AI_BATCH_SIZE,
-        help=f"单批处理条数，默认 {AI_BATCH_SIZE}",
-    )
-    parser.add_argument(
-        "--loops",
-        type=int,
-        default=1,
-        help="连续拍取批次数，0 表示直到无待分析数据",
-    )
-    parser.add_argument("--verbose", action="store_true", help="输出调试日志")
-    return parser.parse_args()
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Investment Radar - 公告 AI 分析")
+    p.add_argument("--model", default="", help="模型 id，覆盖 ACTIVE_MODEL")
+    p.add_argument("--list-models", action="store_true", help="列出已配置模型")
+    p.add_argument("--company-code", default="", help="仅分析指定股票代码")
+    p.add_argument("--limit", type=int, default=AI_BATCH_SIZE, help="单批条数")
+    p.add_argument("--loops", type=int, default=1, help="批次数，0=直到无待分析")
+    p.add_argument("--verbose", action="store_true")
+    return p.parse_args()
+
+
+def print_models() -> None:
+    ids = list_model_ids()
+    if not ids:
+        print("未找到命名模型，可使用旧版扁平 MODEL_PROVIDER 配置。")
+        return
+    print("已配置模型:")
+    for model_id in ids:
+        print(f"  - {model_id}")
+    print("用法: ACTIVE_MODEL=<id> 或 --model <id>")
+
+
+def resolve_model(model_id: str):
+    try:
+        cfg = activate_model(model_id or None)
+    except ValueError as exc:
+        logging.getLogger(__name__).error("%s", exc)
+        sys.exit(1)
+
+    if not cfg.api_key or cfg.api_key == "your_api_key_here":
+        key_hint = "API_KEY" if cfg.id == "legacy" else f"MODEL_{cfg.id.upper()}_API_KEY"
+        logging.getLogger(__name__).error("请先在 ai/.env 配置有效 %s", key_hint)
+        sys.exit(1)
+    return cfg
 
 
 def main() -> None:
@@ -60,33 +62,10 @@ def main() -> None:
     logger = logging.getLogger(__name__)
 
     if args.list_models:
-        ids = list_model_ids()
-        if not ids:
-            print("未找到命名模型（MODEL_<ID>_PROVIDER）。可使用旧版扁平 MODEL_PROVIDER 配置。")
-        else:
-            print("已配置模型:")
-            for model_id in ids:
-                print(f"  - {model_id}")
-            print("用法: 设置 ACTIVE_MODEL=<id>，或启动时加 --model <id>")
+        print_models()
         return
 
-    try:
-        model_cfg = activate_model(args.model or None)
-    except ValueError as exc:
-        logger.error("%s", exc)
-        sys.exit(1)
-
-    if not model_cfg.api_key or model_cfg.api_key == "your_api_key_here":
-        if model_cfg.id == "legacy":
-            logger.error("请先在 ai/.env 配置有效 API_KEY")
-        else:
-            logger.error(
-                "请先在 ai/.env 配置有效 API_KEY（当前模型 id=%s，变量 MODEL_%s_API_KEY）",
-                model_cfg.id,
-                model_cfg.id.upper(),
-            )
-        sys.exit(1)
-
+    model_cfg = resolve_model(args.model)
     if not check_connection() or not check_ai_analysis_table():
         sys.exit(1)
 

@@ -50,17 +50,11 @@ AI 投资研究系统
 ```powershell
 # 首次：复制环境变量并填写 ACTIVE_MODEL 对应模型的 API_KEY，初始化 ai_analysis 表
 Copy-Item .\ai\.env.example .\ai\.env
-.\ai\scripts\init_ai_db.ps1
+.\ai\scripts\init_db.ps1
 
-.\ai\run.ps1 -CompanyCode 601012 -Limit 5
+.\ai\scripts\run.ps1 -CompanyCode 601012 -Limit 5
 
 # 切换模型（.env 中需先配置对应 MODEL_<ID>_*）
-.\ai\run.ps1 -Model deepseek -CompanyCode 601012 -Limit 5
-.\ai\run.ps1 -ListModels
-```
-
-若已进入 `ai` 目录，则改为：
-
-```powershell
-.\run.ps1 -CompanyCode 601012 -Limit 5
+.\ai\scripts\run.ps1 -Model deepseek -CompanyCode 601012 -Limit 5
+.\ai\scripts\run.ps1 -ListModels
 ```

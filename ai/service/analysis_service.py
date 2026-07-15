@@ -6,12 +6,12 @@ import logging
 import time
 from dataclasses import dataclass, field
 
-from ai_repository import AiRepository
-from announcement_reader import AnnouncementReader
-from json_parser import JsonParseError, JsonParser
-from llm_client import LLMClient, LLMError, LLMResponse
-from prompt_builder import PromptBuilder
-from retry_manager import RetryManager
+from llm.client import LLMClient, LLMError, LLMResponse
+from llm.json_parser import JsonParseError, JsonParser
+from llm.prompt import PromptBuilder
+from llm.retry import RetryManager
+from repository.ai_repository import AiRepository
+from repository.announcement_reader import AnnouncementReader
 
 logger = logging.getLogger(__name__)
 

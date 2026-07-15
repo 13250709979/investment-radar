@@ -277,10 +277,10 @@ AI_BATCH_SIZE=20
 
 ```powershell
 # 建 ai_analysis 表（首次）
-.\ai\scripts\init_ai_db.ps1
+.\ai\scripts\init_db.ps1
 
 # 批量分析（每批 20 条）
-.\ai\run.ps1 -Limit 20
+.\ai\scripts\run.ps1 -Limit 20
 ```
 
 ### 2.5 验证（待实现）

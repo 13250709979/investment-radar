@@ -8,8 +8,8 @@ from typing import Any
 
 from psycopg2.extras import Json
 
-from config import DB_SCHEMA
-from database import transaction
+from core.config import DB_SCHEMA
+from core.database import transaction
 
 logger = logging.getLogger(__name__)
 

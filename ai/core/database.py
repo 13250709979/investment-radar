@@ -4,7 +4,7 @@ from contextlib import contextmanager
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_SCHEMA, DB_USER
+from core.config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_SCHEMA, DB_USER
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ def check_ai_analysis_table() -> bool:
             return True
         logger.error(
             "表 %s.ai_analysis 不存在，请先执行：\n"
-            "  .\\ai\\scripts\\init_ai_db.ps1",
+            "  .\\ai\\scripts\\init_db.ps1",
             DB_SCHEMA,
         )
         return False

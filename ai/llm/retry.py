@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from config import AI_MAX_RETRIES
+from core.config import AI_MAX_RETRIES
 
 
 class RetryManager:
