@@ -12,7 +12,7 @@ Investment Radar 项目操作手册与开发记录。
 
 ```powershell
 # 推荐：一键脚本
-.\crawler\run.ps1 -StockCode 601012 -CompanyName 隆基绿能
+.\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName 隆基绿能
 ```
 
 ```powershell
@@ -24,13 +24,13 @@ cd crawler
 ### 带日期范围
 
 ```powershell
-.\crawler\run.ps1 -StockCode 601012 -CompanyName 隆基绿能 -StartDate 2025-01-01 -EndDate 2026-07-13
+.\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName 隆基绿能 -StartDate 2025-01-01 -EndDate 2026-07-13
 ```
 
 ### 测试（只抓 1 页）
 
 ```powershell
-.\crawler\run.ps1 -StockCode 601012 -CompanyName 隆基绿能 -MaxPages 1
+.\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName 隆基绿能 -MaxPages 1
 ```
 
 ### PDF 下载解析
@@ -40,7 +40,7 @@ cd crawler
 .\crawler\scripts\init_content_db.ps1
 
 # 下载并解析 PDF（处理 pdf_download_status=0 的记录）
-.\crawler\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+.\crawler\scripts\run_pdf.ps1 -CompanyCode 601012 -Limit 10
 ```
 
 ```powershell
@@ -148,34 +148,25 @@ docker exec -it postgres psql -U postgres -d investment_radar -c "SELECT company
 
 ```text
 crawler/
-├── main.py                         # 公告采集入口
-├── main_pdf.py                     # PDF 下载解析入口
-├── run.ps1                         # 一键采集
-├── run_pdf.ps1                     # 一键 PDF 解析
-├── config.py
-├── database.py
+├── main.py / main_pdf.py
 ├── requirements.txt
+├── .env.example
+├── core/
+│   ├── config.py
+│   └── database.py
 ├── scripts/
-│   ├── init_db.ps1                 # 建 announcement 表
-│   └── init_content_db.ps1         # 建 announcement_content 表
+│   ├── run.ps1
+│   ├── run_pdf.ps1
+│   ├── init_db.ps1
+│   └── init_content_db.ps1
 ├── spider/
 │   └── cninfo_spider.py
 ├── parser/
-│   └── pdf_parser.py               # PyMuPDF 解析
+│   └── pdf_parser.py
 ├── entity/
-│   ├── announcement.py
-│   ├── pending_announcement.py
-│   └── announcement_content.py
 ├── service/
-│   ├── announcement_service.py
-│   └── pdf_service.py              # PDF 下载解析编排
 ├── repository/
-│   ├── announcement_repository.py
-│   └── announcement_content_repository.py
 └── utils/
-    ├── http_util.py
-    ├── orgid_util.py
-    └── pdf_util.py                 # PDF 下载
 ```
 
 ### 1.6 PDF 下载解析流程
@@ -200,7 +191,7 @@ PyMuPDF 解析
 
 ```powershell
 .\crawler\scripts\init_content_db.ps1
-.\crawler\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+.\crawler\scripts\run_pdf.ps1 -CompanyCode 601012 -Limit 10
 ```
 
 **验证解析结果**
@@ -212,7 +203,7 @@ docker exec -it postgres psql -U postgres -d investment_radar -c "SELECT a.compa
 ### 1.7 采集流程
 
 ```text
-main.py / run.ps1
+main.py / scripts/run.ps1
     │
     ▼
 AnnouncementService
@@ -240,7 +231,7 @@ AnnouncementRepository → PostgreSQL
 
 ## 二、AI 分析（规划中）
 
-> 模块目录：`ai/`，与 `crawler/` 完全解耦。完整设计见 [05-AI-Service.md](05-AI-Service.md)。
+> 模块目录：`ai-analysis/`，与 `crawler/` 完全解耦。完整设计见 [05-AI-Service.md](05-AI-Service.md)。
 
 ### 2.1 流程
 
@@ -260,7 +251,7 @@ JsonParser → ai_analysis → 更新 ai_status=1
 1. 已采集公告（`announcement`）
 2. 已解析 PDF（`announcement_content.parse_status=1`）
 3. 已建 `ai_analysis` 表
-4. 配置 `ai/.env`（参考 `ai/.env.example`）
+4. 配置 `ai-analysis/.env`（参考 `ai-analysis/.env.example`）
 
 ### 2.3 配置
 
@@ -277,10 +268,10 @@ AI_BATCH_SIZE=20
 
 ```powershell
 # 建 ai_analysis 表（首次）
-.\ai\scripts\init_db.ps1
+.\ai-analysis\scripts\init_db.ps1
 
 # 批量分析（每批 20 条）
-.\ai\scripts\run.ps1 -Limit 20
+.\ai-analysis\scripts\run.ps1 -Limit 20
 ```
 
 ### 2.5 验证（待实现）
@@ -313,10 +304,10 @@ docker exec -it postgres psql -U postgres -d investment_radar -c "SELECT company
 | 事项 | 内容 |
 |------|------|
 | 文档 | 完成 [05-AI-Service.md](05-AI-Service.md) V1 设计 |
-| 目录 | `ai/` 独立模块，8 个 Task 开发顺序 |
+| 目录 | `ai-analysis/` 独立模块，8 个 Task 开发顺序 |
 | 原则 | 与 Crawler 解耦，OpenAI Compatible API，JSON 输出 |
 | Prompt | v1.0，详见 [11-Prompts.md](11-Prompts.md) |
-| 配置 | `ai/.env.example` 模板 |
+| 配置 | `ai-analysis/.env.example` 模板 |
 
 ### 下一步
 

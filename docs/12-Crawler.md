@@ -8,12 +8,12 @@ Python 数据采集服务，从巨潮资讯网抓取上市公司公告，写入 
 
 ```powershell
 # 采集隆基绿能（601012）公告
-.\crawler\run.ps1 -StockCode 601012 -CompanyName 隆基绿能
+.\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName 隆基绿能
 ```
 
 ```powershell
 # 指定日期范围
-.\crawler\run.ps1 -StockCode 601012 -CompanyName 隆基绿能 -StartDate 2025-01-01 -EndDate 2026-07-13
+.\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName 隆基绿能 -StartDate 2025-01-01 -EndDate 2026-07-13
 ```
 
 ```powershell
@@ -51,45 +51,45 @@ PyMuPDF 解析
 ```
 
 ```powershell
-.\crawler\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+.\crawler\scripts\run_pdf.ps1 -CompanyCode 601012 -Limit 10
 ```
 
 ## 目录结构
 
 ```text
 crawler/
-├── main.py                         # CLI 入口
-├── run.ps1                         # 一键运行脚本
-├── config.py                       # 配置
-├── database.py                     # PostgreSQL 连接
+├── main.py / main_pdf.py       # CLI 入口
 ├── requirements.txt
+├── .env.example                # 配置模板（复制为 .env）
+├── core/
+│   ├── config.py               # 从 .env 加载配置
+│   └── database.py             # PostgreSQL 连接
 ├── scripts/
-│   └── init_db.ps1                 # 建表脚本
+│   ├── run.ps1                 # 公告采集
+│   ├── run_pdf.ps1             # PDF 下载解析
+│   ├── init_db.ps1
+│   └── init_content_db.ps1
 ├── spider/
-│   └── cninfo_spider.py            # CnInfoSpider
+│   └── cninfo_spider.py
 ├── entity/
-│   └── announcement.py             # Announcement 实体
 ├── service/
-│   └── announcement_service.py     # 采集编排
 ├── repository/
-│   └── announcement_repository.py    # 数据入库
+├── parser/
 └── utils/
-    ├── http_util.py                # HTTP 请求
-    └── orgid_util.py               # orgId 动态查询
 ```
 
 ## 分层职责
 
 | 层 | 文件 | 职责 |
 |----|------|------|
-| 入口 | `main.py` / `run.ps1` | 解析参数，启动采集 |
+| 入口 | `main.py` / `scripts/run.ps1` | 解析参数，启动采集 |
 | 编排 | `service/announcement_service.py` | Spider → Entity → Repository |
 | 爬虫 | `spider/cninfo_spider.py` | 请求巨潮接口，返回 JSON |
 | 工具 | `utils/orgid_util.py` | 股票代码 → orgId 映射 |
 | 工具 | `utils/http_util.py` | HTTP 请求头、重试 |
 | 实体 | `entity/announcement.py` | JSON → Entity 转换 |
 | 仓储 | `repository/announcement_repository.py` | 写入数据库，去重 |
-| 基础 | `config.py` / `database.py` | 配置与数据库连接 |
+| 基础 | `core/config.py` / `core/database.py` | 配置与数据库连接 |
 
 ## 采集流程
 

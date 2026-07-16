@@ -43,7 +43,7 @@ announcement_content
 ## 二、目录结构
 
 ```text
-ai/
+ai-analysis/
 ├── main.py                     # CLI 入口
 ├── requirements.txt
 ├── .env.example
@@ -176,7 +176,7 @@ class LLMClient:
 
 ## 七、配置文件
 
-**文件：** `ai/.env`（参考 `ai/.env.example`）
+**文件：** `ai-analysis/.env`（参考 `ai-analysis/.env.example`）
 
 可同时配置多种模型，运行时只启用一种：
 

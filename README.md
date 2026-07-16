@@ -26,13 +26,13 @@ AI 投资研究系统
 |------|------|------|
 | Backend | `backend/` | Spring Boot API |
 | Crawler | `crawler/` | 巨潮公告采集 + PDF 解析 |
-| AI Service | `ai/` | 公告 AI 分析 |
+| AI Service | `ai-analysis/` | 公告 AI 分析 |
 | Frontend | 待建 | Web 界面 |
 
 ## 采集公告（快速执行）
 
 ```powershell
-.\crawler\run.ps1 -StockCode 601012 -CompanyName 隆基绿能
+.\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName 隆基绿能
 ```
 
 详见 [13-Operation-Log.md](docs/13-Operation-Log.md)。
@@ -40,7 +40,7 @@ AI 投资研究系统
 ## PDF 下载解析
 
 ```powershell
-.\crawler\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+.\crawler\scripts\run_pdf.ps1 -CompanyCode 601012 -Limit 10
 ```
 
 ## 公告 AI 分析
@@ -49,12 +49,12 @@ AI 投资研究系统
 
 ```powershell
 # 首次：复制环境变量并填写 ACTIVE_MODEL 对应模型的 API_KEY，初始化 ai_analysis 表
-Copy-Item .\ai\.env.example .\ai\.env
-.\ai\scripts\init_db.ps1
+Copy-Item .\ai-analysis\.env.example .\ai-analysis\.env
+.\ai-analysis\scripts\init_db.ps1
 
-.\ai\scripts\run.ps1 -CompanyCode 601012 -Limit 5
+.\ai-analysis\scripts\run.ps1 -CompanyCode 601012 -Limit 5
 
 # 切换模型（.env 中需先配置对应 MODEL_<ID>_*）
-.\ai\scripts\run.ps1 -Model deepseek -CompanyCode 601012 -Limit 5
-.\ai\scripts\run.ps1 -ListModels
+.\ai-analysis\scripts\run.ps1 -Model deepseek -CompanyCode 601012 -Limit 5
+.\ai-analysis\scripts\run.ps1 -ListModels
 ```

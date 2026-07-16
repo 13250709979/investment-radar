@@ -1,6 +1,6 @@
 # Prompts
 
-AI 分析模块使用的 Prompt 模板。由 `ai/llm/prompt.py` 统一管理。
+AI 分析模块使用的 Prompt 模板。由 `ai-analysis/llm/prompt.py` 统一管理。
 
 当前版本：**v1.0**
 

@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from config import CNINFO_QUERY_URL, DEFAULT_PAGE_SIZE
+from core.config import CNINFO_INDEX_URL, CNINFO_QUERY_URL, DEFAULT_PAGE_SIZE
 from entity.announcement import Announcement
 from utils.http_util import create_session, post_form, sleep_between_requests
 from utils.orgid_util import build_stock_param
@@ -22,7 +22,7 @@ class CnInfoSpider:
     def _warm_up(self):
         """访问首页获取 Cookie。"""
         try:
-            self.session.get("https://www.cninfo.com.cn/new/index", timeout=20)
+            self.session.get(CNINFO_INDEX_URL, timeout=20)
         except Exception as exc:
             logger.warning("巨潮首页预热失败: %s", exc)
 

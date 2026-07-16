@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import List, Optional
 
-from database import get_cursor
+from core.database import get_cursor
 from entity.announcement import Announcement
 from entity.pending_announcement import PendingAnnouncement
 

@@ -17,7 +17,7 @@
 
 - [x] Crawler 公告采集
 - [x] PDF 下载解析 → `announcement_content`
-- [x] AI 批量分析模块代码 → `ai/`
+- [x] AI 批量分析模块代码 → `ai-analysis/`
 
 ## 待开发
 

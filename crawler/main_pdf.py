@@ -2,7 +2,8 @@ import argparse
 import logging
 import sys
 
-from database import (
+from core.config import PDF_BATCH_LIMIT
+from core.database import (
     check_announcement_content_table,
     check_announcement_table,
     check_connection,
@@ -22,7 +23,7 @@ def setup_logging(verbose: bool):
 def parse_args():
     parser = argparse.ArgumentParser(description="Investment Radar - 公告 PDF 下载解析")
     parser.add_argument("--company-code", default="", help="仅处理指定股票代码")
-    parser.add_argument("--limit", type=int, default=50, help="单次处理条数，默认 50")
+    parser.add_argument("--limit", type=int, default=PDF_BATCH_LIMIT, help="单次处理条数")
     parser.add_argument("--verbose", action="store_true", help="输出调试日志")
     return parser.parse_args()
 

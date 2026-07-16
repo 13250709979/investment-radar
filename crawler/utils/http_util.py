@@ -1,13 +1,14 @@
+from __future__ import annotations
+
 import logging
 import time
-from typing import Optional
 from urllib.parse import quote
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config import REQUEST_RETRY, REQUEST_TIMEOUT
+from core.config import REQUEST_RETRY, REQUEST_SLEEP, REQUEST_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
@@ -63,5 +64,5 @@ def post_form(session: requests.Session, url: str, data: dict) -> dict:
     return response.json()
 
 
-def sleep_between_requests(seconds: float = 0.5):
-    time.sleep(seconds)
+def sleep_between_requests(seconds: float | None = None):
+    time.sleep(REQUEST_SLEEP if seconds is None else seconds)

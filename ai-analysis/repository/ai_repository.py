@@ -70,7 +70,7 @@ class AiRepository:
             WHERE id = %s
         """
 
-        with transaction() as (_conn, cursor):
+        with transaction() as cursor:
             cursor.execute(
                 insert_sql,
                 (
@@ -147,7 +147,7 @@ class AiRepository:
             WHERE id = %s
         """
 
-        with transaction() as (_conn, cursor):
+        with transaction() as cursor:
             cursor.execute(
                 insert_sql,
                 (

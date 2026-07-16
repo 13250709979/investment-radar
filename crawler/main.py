@@ -3,7 +3,7 @@ import logging
 import sys
 from datetime import datetime, timedelta
 
-from database import check_announcement_table, check_connection
+from core.database import check_announcement_table, check_connection
 from service.announcement_service import AnnouncementService
 
 

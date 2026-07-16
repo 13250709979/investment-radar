@@ -1,7 +1,10 @@
+"""Announcement crawl orchestration: spider -> entity -> DB."""
+
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Optional
 
 from entity.announcement import Announcement
 from repository.announcement_repository import AnnouncementRepository
@@ -21,47 +24,39 @@ class CrawlResult:
 
 
 class AnnouncementService:
-    def __init__(self):
-        self.repository = AnnouncementRepository()
+    def __init__(self, repository: AnnouncementRepository | None = None):
+        self.repository = repository or AnnouncementRepository()
 
     def crawl_and_save(
         self,
         stock_code: str,
         company_name: str = "",
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        max_pages: Optional[int] = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        max_pages: int | None = None,
     ) -> CrawlResult:
         stock_code = stock_code.strip()
         if not stock_code:
-            raise ValueError("stock_code 不能为空")
+            raise ValueError("stock_code is required")
 
         end_date = end_date or datetime.now().strftime("%Y-%m-%d")
         start_date = start_date or (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
 
-        spider = CnInfoSpider(company_name=company_name)
-
-        # 1. 请求巨潮接口，返回 JSON
-        raw_list = spider.fetch_all(
+        # 1) fetch JSON  2) to entities  3) insert
+        raw_list = CnInfoSpider(company_name=company_name).fetch_all(
             stock_code=stock_code,
             start_date=start_date,
             end_date=end_date,
             max_pages=max_pages,
         )
-
-        # 2. JSON 转换为 Entity
         entities = Announcement.from_cninfo_list(raw_list)
 
-        inserted = 0
-        skipped = 0
+        inserted = skipped = 0
         resolved_name = company_name
-
-        # 3. Entity 写入 PostgreSQL
         for entity in entities:
             if not resolved_name and entity.company_name:
                 resolved_name = entity.company_name
-            if not entity.company_code:
-                entity.company_code = stock_code
+            entity.company_code = entity.company_code or stock_code
             if company_name:
                 entity.company_name = company_name
 
@@ -70,18 +65,16 @@ class AnnouncementService:
             else:
                 skipped += 1
 
-        total_in_db = self.repository.count_by_company(stock_code)
         result = CrawlResult(
             stock_code=stock_code,
             company_name=resolved_name or company_name,
             fetched=len(entities),
             inserted=inserted,
             skipped=skipped,
-            total_in_db=total_in_db,
+            total_in_db=self.repository.count_by_company(stock_code),
         )
-
         logger.info(
-            "采集完成: stock=%s fetched=%s inserted=%s skipped=%s total=%s",
+            "crawl done: stock=%s fetched=%s inserted=%s skipped=%s total=%s",
             result.stock_code,
             result.fetched,
             result.inserted,

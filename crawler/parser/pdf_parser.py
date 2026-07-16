@@ -3,7 +3,7 @@ from typing import Tuple
 
 import fitz
 
-from config import PARSER_NAME
+from core.config import PARSER_NAME
 
 logger = logging.getLogger(__name__)
 

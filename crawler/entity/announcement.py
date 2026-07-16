@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
 
-from config import CNINFO_STATIC_BASE
+from core.config import CNINFO_STATIC_BASE
 
 
 @dataclass

@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from database import get_cursor
+from core.database import get_cursor
 from entity.announcement_content import AnnouncementContent
 
 logger = logging.getLogger(__name__)

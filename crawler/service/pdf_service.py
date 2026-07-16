@@ -1,9 +1,12 @@
+"""PDF download + parse orchestration."""
+
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
-from config import PARSER_NAME
+from core.config import PARSER_NAME
 from entity.announcement_content import AnnouncementContent
 from parser.pdf_parser import parse_pdf
 from repository.announcement_content_repository import AnnouncementContentRepository
@@ -12,10 +15,8 @@ from utils.pdf_util import download_pdf
 
 logger = logging.getLogger(__name__)
 
-PDF_STATUS_DOWNLOADED = 1
-PDF_STATUS_FAILED = 2
-PARSE_STATUS_SUCCESS = 1
-PARSE_STATUS_FAILED = 2
+PDF_OK, PDF_FAIL = 1, 2
+PARSE_OK, PARSE_FAIL = 1, 2
 
 
 class PdfDownloadError(Exception):
@@ -28,10 +29,10 @@ class PdfParseError(Exception):
 
 @dataclass
 class PdfProcessResult:
-    total: int
-    success: int
-    download_failed: int
-    parse_failed: int
+    total: int = 0
+    success: int = 0
+    download_failed: int = 0
+    parse_failed: int = 0
 
 
 class PdfService:
@@ -39,18 +40,9 @@ class PdfService:
         self.announcement_repo = AnnouncementRepository()
         self.content_repo = AnnouncementContentRepository()
 
-    def process_pending(
-        self,
-        limit: int = 50,
-        company_code: Optional[str] = None,
-    ) -> PdfProcessResult:
+    def process_pending(self, limit: int = 50, company_code: str | None = None) -> PdfProcessResult:
         pending = self.announcement_repo.find_pending_pdf(limit=limit, company_code=company_code)
-        result = PdfProcessResult(
-            total=len(pending),
-            success=0,
-            download_failed=0,
-            parse_failed=0,
-        )
+        result = PdfProcessResult(total=len(pending))
 
         for item in pending:
             try:
@@ -58,14 +50,14 @@ class PdfService:
                 result.success += 1
             except PdfDownloadError as exc:
                 result.download_failed += 1
-                self.announcement_repo.update_pdf_status(item.id, PDF_STATUS_FAILED)
-                logger.error("PDF 下载失败 id=%s: %s", item.id, exc)
+                self.announcement_repo.update_pdf_status(item.id, PDF_FAIL)
+                logger.error("PDF download failed id=%s: %s", item.id, exc)
             except PdfParseError as exc:
                 result.parse_failed += 1
-                logger.error("PDF 解析失败 id=%s: %s", item.id, exc)
+                logger.error("PDF parse failed id=%s: %s", item.id, exc)
 
         logger.info(
-            "PDF 处理完成: total=%s success=%s download_failed=%s parse_failed=%s",
+            "PDF done: total=%s ok=%s download_fail=%s parse_fail=%s",
             result.total,
             result.success,
             result.download_failed,
@@ -74,7 +66,7 @@ class PdfService:
         return result
 
     def _process_one(self, item) -> None:
-        # 1. 下载 PDF
+        # 1) download
         try:
             local_path, content_bytes, md5, file_name = download_pdf(
                 pdf_url=item.adjunct_url,
@@ -84,42 +76,35 @@ class PdfService:
         except Exception as exc:
             raise PdfDownloadError(str(exc)) from exc
 
-        # 2. PyMuPDF 解析
-        parse_status = PARSE_STATUS_SUCCESS
-        parse_message = None
-        text = ""
-        page_count = 0
-        parser_version = None
-
+        # 2) parse
+        text, page_count, parser_version = "", 0, None
+        parse_status, parse_message = PARSE_OK, None
         try:
             text, page_count, parser_version = parse_pdf(content_bytes)
             if not text:
-                parse_status = PARSE_STATUS_FAILED
-                parse_message = "解析结果为空"
+                parse_status, parse_message = PARSE_FAIL, "empty parse result"
         except Exception as exc:
-            parse_status = PARSE_STATUS_FAILED
-            parse_message = str(exc)
+            parse_status, parse_message = PARSE_FAIL, str(exc)
 
-        # 3. 写入 announcement_content
-        content_entity = AnnouncementContent(
-            announcement_id=item.id,
-            pdf_url=item.adjunct_url,
-            pdf_file_name=file_name,
-            pdf_local_path=local_path,
-            pdf_size=len(content_bytes),
-            pdf_md5=md5,
-            content=text,
-            page_count=page_count,
-            parser_name=PARSER_NAME,
-            parser_version=parser_version,
-            parse_status=parse_status,
-            parse_message=parse_message,
-            parse_time=datetime.now(),
+        # 3) save content + mark downloaded
+        self.content_repo.insert(
+            AnnouncementContent(
+                announcement_id=item.id,
+                pdf_url=item.adjunct_url,
+                pdf_file_name=file_name,
+                pdf_local_path=local_path,
+                pdf_size=len(content_bytes),
+                pdf_md5=md5,
+                content=text,
+                page_count=page_count,
+                parser_name=PARSER_NAME,
+                parser_version=parser_version,
+                parse_status=parse_status,
+                parse_message=parse_message,
+                parse_time=datetime.now(),
+            )
         )
-        self.content_repo.insert(content_entity)
+        self.announcement_repo.update_pdf_status(item.id, PDF_OK)
 
-        # 4. 更新 announcement.pdf_download_status
-        self.announcement_repo.update_pdf_status(item.id, PDF_STATUS_DOWNLOADED)
-
-        if parse_status == PARSE_STATUS_FAILED:
-            raise PdfParseError(parse_message or "解析失败")
+        if parse_status == PARSE_FAIL:
+            raise PdfParseError(parse_message or "parse failed")

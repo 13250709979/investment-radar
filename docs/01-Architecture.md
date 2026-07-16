@@ -20,13 +20,13 @@ PostgreSQL ◄── Crawler（公告采集 + PDF 解析）
 | Frontend | 待建 | — | 输入股票、查看任务与报告 |
 | Backend | `backend/` | Spring Boot 2.7 | REST API、研究任务管理 |
 | Crawler | `crawler/` | Python | 巨潮公告采集 + PDF 解析，详见 [12-Crawler.md](12-Crawler.md) |
-| AI Service | `ai/` | Python | 公告 AI 分析，详见 [05-AI-Service.md](05-AI-Service.md) |
+| AI Service | `ai-analysis/` | Python | 公告 AI 分析，详见 [05-AI-Service.md](05-AI-Service.md) |
 | Database | — | PostgreSQL 15 | 任务、公告、报告、AI 分析结果 |
 
 ## 模块解耦
 
 ```text
-crawler/          ai/
+crawler/          ai-analysis/
    │               │
    ▼               ▼
 announcement   读取 content

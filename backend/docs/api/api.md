@@ -245,7 +245,123 @@ Invoke-RestMethod -Uri http://localhost:8080/api/task/list
 
 ---
 
-## 6. 异常测试（开发用）
+## 6. 查询 AI 分析结果（分页）
+
+### `GET /api/ai-analysis`
+
+分页查询 `ai_analysis` 表中的公告 AI 分析结果。
+
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| companyCode | string | 否 | 股票代码，精确匹配 |
+| companyName | string | 否 | 公司名称，模糊匹配 |
+| analysisStatus | int | 否 | `1` 成功 / `2` 失败 |
+| page | int | 否 | 页码，默认 1 |
+| size | int | 否 | 每页条数，默认 20，最大 100 |
+
+**响应示例：**
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "total": 1,
+    "page": 1,
+    "size": 20,
+    "items": [
+      {
+        "id": 1,
+        "dataType": "ANNOUNCEMENT",
+        "dataId": 1001,
+        "companyCode": "601012",
+        "companyName": "隆基绿能",
+        "industry": "光伏",
+        "eventType": "扩产",
+        "eventLevel": 4,
+        "sentiment": "POSITIVE",
+        "title": "扩产公告",
+        "summary": "公司拟扩产硅片产能",
+        "tags": ["扩产", "光伏"],
+        "modelProvider": "GoogleAIStudio",
+        "modelName": "gemini-2.5-flash",
+        "analysisStatus": 1,
+        "analysisTime": "2026-07-15T12:00:00"
+      }
+    ]
+  }
+}
+```
+
+列表接口不返回 `reasoning` / `investmentOpinion` / `riskWarning`，请用详情接口查看。
+
+**手动测试（PowerShell）：**
+
+```powershell
+# 全部最新
+Invoke-RestMethod -Uri "http://localhost:8080/api/ai-analysis?page=1&size=20"
+
+# 按股票代码
+Invoke-RestMethod -Uri "http://localhost:8080/api/ai-analysis?companyCode=601012&analysisStatus=1"
+```
+
+---
+
+## 7. 查询 AI 分析详情
+
+### `GET /api/ai-analysis/{id}`
+
+按主键返回单条完整分析结果（含理由、投资观点、风险提示）。
+
+**路径参数：**
+
+| 参数 | 说明 |
+|------|------|
+| id | `ai_analysis.id` |
+
+**响应示例：**
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "id": 1,
+    "companyCode": "601012",
+    "companyName": "隆基绿能",
+    "eventType": "扩产",
+    "sentiment": "POSITIVE",
+    "summary": "公司拟扩产硅片产能",
+    "reasoning": "产能扩张有利于份额提升",
+    "investmentOpinion": "关注执行进度",
+    "riskWarning": "扩产落地不及预期",
+    "analysisStatus": 1,
+    "analysisTime": "2026-07-15T12:00:00"
+  }
+}
+```
+
+**不存在（404）：**
+
+```json
+{
+  "code": 404,
+  "message": "AI分析结果不存在",
+  "data": null
+}
+```
+
+**手动测试（PowerShell）：**
+
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8080/api/ai-analysis/1"
+```
+
+---
+
+## 8. 异常测试（开发用）
 
 ### `GET /test/error`
 
@@ -285,6 +401,7 @@ mvn test
 | `BackendApplicationTests` | — | Spring 上下文加载 |
 | `GlobalExceptionHandlerTest` | `GET /test/error` | 验证 500 异常响应 |
 | `ResearchControllerTest` | Research 模块 | 创建任务、查询状态、任务列表 |
+| `AiAnalysisControllerTest` | AI 分析查询 | 列表、详情、404 |
 
 ### ResearchControllerTest 用例
 
@@ -299,6 +416,13 @@ mvn test
 ```powershell
 cd backend
 mvn test -Dtest=ResearchControllerTest
+```
+
+### 单独运行 AI 分析测试
+
+```powershell
+cd backend
+mvn test -Dtest=AiAnalysisControllerTest
 ```
 
 ---
@@ -325,6 +449,10 @@ Invoke-RestMethod -Uri http://localhost:8080/api/task/list
 
 # 5. 获取报告（需 Worker 生成报告后才有数据）
 Invoke-RestMethod -Uri "http://localhost:8080/api/report/$taskId"
+
+# 6. 查询 AI 公告分析结果
+Invoke-RestMethod -Uri "http://localhost:8080/api/ai-analysis?companyCode=601012"
+Invoke-RestMethod -Uri "http://localhost:8080/api/ai-analysis/1"
 ```
 
 ---
@@ -338,4 +466,6 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/report/$taskId"
 | GET | `/api/research/{taskId}` | 查询任务状态 |
 | GET | `/api/report/{taskId}` | 获取研究报告 |
 | GET | `/api/task/list` | 查询历史任务 |
+| GET | `/api/ai-analysis` | 分页查询 AI 分析结果 |
+| GET | `/api/ai-analysis/{id}` | 查询 AI 分析详情 |
 | GET | `/test/error` | 异常测试（开发用） |
