@@ -32,7 +32,7 @@ AI 投资研究系统
 ## 采集公告（快速执行）
 
 ```powershell
-.\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName 隆基绿能
+.\crawler\scripts\run_crawl_announcement.ps1 -StockCode 601012 -CompanyName 隆基绿能
 ```
 
 详见 [13-Operation-Log.md](docs/13-Operation-Log.md)。
@@ -40,7 +40,7 @@ AI 投资研究系统
 ## PDF 下载解析
 
 ```powershell
-.\crawler\scripts\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+.\crawler\scripts\run_download_parse_pdf.ps1 -CompanyCode 601012 -Limit 10
 ```
 
 ## 公告 AI 分析

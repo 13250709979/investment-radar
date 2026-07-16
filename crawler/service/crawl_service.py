@@ -23,7 +23,7 @@ class CrawlResult:
     total_in_db: int
 
 
-class AnnouncementService:
+class CrawlService:
     def __init__(self, repository: AnnouncementRepository | None = None):
         self.repository = repository or AnnouncementRepository()
 

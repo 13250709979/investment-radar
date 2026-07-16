@@ -8,7 +8,7 @@ from core.database import (
     check_announcement_table,
     check_connection,
 )
-from service.pdf_service import PdfService
+from service.pdf_parse_service import PdfParseService
 
 
 def setup_logging(verbose: bool):
@@ -35,7 +35,7 @@ def main():
     if not check_connection() or not check_announcement_table() or not check_announcement_content_table():
         sys.exit(1)
 
-    service = PdfService()
+    service = PdfParseService()
     result = service.process_pending(
         limit=args.limit,
         company_code=args.company_code or None,

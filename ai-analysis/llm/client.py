@@ -1,4 +1,4 @@
-"""??????OpenAI Compatible API??"""
+"""大模型封装（OpenAI Compatible API）。"""
 
 from __future__ import annotations
 
@@ -11,12 +11,12 @@ from core.config import AI_REQUEST_TIMEOUT, LLM_TEMPERATURE, ModelConfig
 
 logger = logging.getLogger(__name__)
 
-# status -> (????, ?????)?{body}/{provider} ????
+# status -> (文案模板, 是否可重试)；{body}/{provider} 按需替换
 _HTTP_ERRORS = {
-    401: ("API Key ???401????? .env", False),
-    402: ("?????402????={provider}?????????", False),
-    403: ("?????403?: {body}", False),
-    429: ("???429?: {body}", True),
+    401: ("API Key 无效（401），请检查 .env", False),
+    402: ("余额不足（402）。当前={provider}，请充值或切换模型", False),
+    403: ("拒绝访问（403）: {body}", False),
+    429: ("限流（429）: {body}", True),
 }
 
 
@@ -51,9 +51,9 @@ class LLMClient:
 
     def analyze(self, prompt: str) -> LLMResponse:
         if not self.model.api_key:
-            raise LLMError("API_KEY ?????? ai-analysis/.env ???", retryable=False)
+            raise LLMError("API_KEY 未配置，请在 ai-analysis/.env 中设置", retryable=False)
 
-        logger.debug("?? LLM: %s / %s", self.provider, self.model_name)
+        logger.debug("调用 LLM: %s / %s", self.provider, self.model_name)
         data = self._post(prompt)
         return self._parse(data)
 
@@ -71,7 +71,7 @@ class LLMClient:
         try:
             resp = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
         except requests.RequestException as exc:
-            raise LLMError(f"LLM ????: {exc}", retryable=True) from exc
+            raise LLMError(f"LLM 网络异常: {exc}", retryable=True) from exc
 
         if resp.status_code >= 400:
             raise self._to_error(resp)
@@ -81,7 +81,7 @@ class LLMClient:
         try:
             content = data["choices"][0]["message"]["content"] or ""
         except (KeyError, IndexError, TypeError) as exc:
-            raise LLMError(f"LLM ??????: {data}", retryable=False) from exc
+            raise LLMError(f"LLM 响应格式异常: {data}", retryable=False) from exc
 
         usage = data.get("usage") or {}
         inp = int(usage.get("prompt_tokens") or 0)
@@ -98,5 +98,5 @@ class LLMClient:
             msg, retryable = _HTTP_ERRORS[status]
             return LLMError(msg.format(body=body, provider=provider), retryable=retryable, status_code=status)
         if status >= 500:
-            return LLMError(f"??????{status}?: {body}", retryable=True, status_code=status)
-        return LLMError(f"LLM ?????{status}?: {body}", retryable=False, status_code=status)
+            return LLMError(f"服务端错误（{status}）: {body}", retryable=True, status_code=status)
+        return LLMError(f"LLM 请求失败（{status}）: {body}", retryable=False, status_code=status)

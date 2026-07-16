@@ -1,4 +1,4 @@
-"""???????"""
+"""批量分析入口。"""
 
 from __future__ import annotations
 
@@ -21,12 +21,12 @@ def setup_logging(verbose: bool) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Investment Radar - ?? AI ??")
-    p.add_argument("--model", default="", help="?? id??? ACTIVE_MODEL")
-    p.add_argument("--list-models", action="store_true", help="???????")
-    p.add_argument("--company-code", default="", help="?????????")
-    p.add_argument("--limit", type=int, default=AI_BATCH_SIZE, help="????")
-    p.add_argument("--loops", type=int, default=1, help="????0=??????")
+    p = argparse.ArgumentParser(description="Investment Radar - 公告 AI 分析")
+    p.add_argument("--model", default="", help="模型 id，覆盖 ACTIVE_MODEL")
+    p.add_argument("--list-models", action="store_true", help="列出已配置模型")
+    p.add_argument("--company-code", default="", help="仅分析指定股票代码")
+    p.add_argument("--limit", type=int, default=AI_BATCH_SIZE, help="单批条数")
+    p.add_argument("--loops", type=int, default=1, help="批次数，0=直到无待分析")
     p.add_argument("--verbose", action="store_true")
     return p.parse_args()
 
@@ -38,7 +38,7 @@ def main() -> None:
 
     if args.list_models:
         ids = list_model_ids()
-        print("?????:" if ids else "???????????? MODEL_PROVIDER ???")
+        print("已配置模型:" if ids else "未找到命名模型（可用扁平 MODEL_PROVIDER 配置）")
         for mid in ids:
             print(f"  - {mid}")
         return
@@ -51,7 +51,7 @@ def main() -> None:
 
     if not model.api_key or model.api_key == "your_api_key_here":
         hint = "API_KEY" if model.id == "default" else f"MODEL_{model.id.upper()}_API_KEY"
-        logger.error("?? ai-analysis/.env ???? %s", hint)
+        logger.error("请在 ai-analysis/.env 配置有效 %s", hint)
         sys.exit(1)
 
     if not check_connection() or not check_ai_analysis_table():
@@ -76,15 +76,15 @@ def main() -> None:
         failed += result.failed
 
         if result.total == 0:
-            logger.info("?????????")
+            logger.info("无待分析公告，结束")
             break
         if args.loops == 0 and result.total < args.limit:
             break
 
     print("=" * 50)
-    print(f"???? : {total}")
-    print(f"??     : {success}")
-    print(f"??     : {failed}")
+    print(f"处理总计 : {total}")
+    print(f"成功     : {success}")
+    print(f"失败     : {failed}")
     print("=" * 50)
 
 

@@ -8,18 +8,18 @@ Python 数据采集服务，从巨潮资讯网抓取上市公司公告，写入 
 
 ```powershell
 # 采集隆基绿能（601012）公告
-.\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName 隆基绿能
+.\crawler\scripts\run_crawl_announcement.ps1 -StockCode 601012 -CompanyName 隆基绿能
 ```
 
 ```powershell
 # 指定日期范围
-.\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName 隆基绿能 -StartDate 2025-01-01 -EndDate 2026-07-13
+.\crawler\scripts\run_crawl_announcement.ps1 -StockCode 601012 -CompanyName 隆基绿能 -StartDate 2025-01-01 -EndDate 2026-07-13
 ```
 
 ```powershell
-# 直接调用 main.py
+# 直接调用 crawl_announcement.py
 cd crawler
-.\.venv\Scripts\python main.py --stock-code 601012 --company-name 隆基绿能
+.\.venv\Scripts\python crawl_announcement.py --stock-code 601012 --company-name 隆基绿能
 ```
 
 | 参数 | 说明 |
@@ -51,39 +51,43 @@ PyMuPDF 解析
 ```
 
 ```powershell
-.\crawler\scripts\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+.\crawler\scripts\run_download_parse_pdf.ps1 -CompanyCode 601012 -Limit 10
 ```
 
 ## 目录结构
 
 ```text
 crawler/
-├── main.py / main_pdf.py       # CLI 入口
+├── crawl_announcement.py / download_parse_pdf.py  # CLI 入口
 ├── requirements.txt
 ├── .env.example                # 配置模板（复制为 .env）
 ├── core/
 │   ├── config.py               # 从 .env 加载配置
 │   └── database.py             # PostgreSQL 连接
 ├── scripts/
-│   ├── run.ps1                 # 公告采集
-│   ├── run_pdf.ps1             # PDF 下载解析
+│   ├── run_crawl_announcement.ps1   # 公告采集
+│   ├── run_download_parse_pdf.ps1   # PDF 下载解析
 │   ├── init_db.ps1
 │   └── init_content_db.ps1
 ├── spider/
 │   └── cninfo_spider.py
 ├── entity/
 ├── service/
+│   ├── crawl_service.py
+│   └── pdf_parse_service.py
 ├── repository/
 ├── parser/
+│   └── pdf_text_parser.py
 └── utils/
+    └── pdf_download.py
 ```
 
 ## 分层职责
 
 | 层 | 文件 | 职责 |
 |----|------|------|
-| 入口 | `main.py` / `scripts/run.ps1` | 解析参数，启动采集 |
-| 编排 | `service/announcement_service.py` | Spider → Entity → Repository |
+| 入口 | `crawl_announcement.py` / `scripts/run_crawl_announcement.ps1` | 解析参数，启动采集 |
+| 编排 | `service/crawl_service.py` | Spider → Entity → Repository |
 | 爬虫 | `spider/cninfo_spider.py` | 请求巨潮接口，返回 JSON |
 | 工具 | `utils/orgid_util.py` | 股票代码 → orgId 映射 |
 | 工具 | `utils/http_util.py` | HTTP 请求头、重试 |
@@ -94,10 +98,10 @@ crawler/
 ## 采集流程
 
 ```text
-main.py
+crawl_announcement.py
     │
     ▼
-AnnouncementService
+CrawlService
     │
     ▼
 CnInfoSpider → 巨潮接口 → JSON

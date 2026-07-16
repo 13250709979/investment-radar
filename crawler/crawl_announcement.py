@@ -4,7 +4,7 @@ import sys
 from datetime import datetime, timedelta
 
 from core.database import check_announcement_table, check_connection
-from service.announcement_service import AnnouncementService
+from service.crawl_service import CrawlService
 
 
 def setup_logging(verbose: bool):
@@ -42,7 +42,7 @@ def main():
     if not check_connection() or not check_announcement_table():
         sys.exit(1)
 
-    service = AnnouncementService()
+    service = CrawlService()
     result = service.crawl_and_save(
         stock_code=args.stock_code,
         company_name=args.company_name,

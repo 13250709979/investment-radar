@@ -1,13 +1,9 @@
-# Announcement crawl
-# Usage: .\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName LonGi
+# Download and parse announcement PDFs into DB
+# Usage: .\crawler\scripts\run_download_parse_pdf.ps1 -CompanyCode 601888 -Limit 20
 
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$StockCode,
-    [string]$CompanyName = "",
-    [string]$StartDate = "",
-    [string]$EndDate = "",
-    [int]$MaxPages = 0,
+    [string]$CompanyCode = "",
+    [int]$Limit = 50,
     [switch]$Verbose
 )
 
@@ -29,11 +25,8 @@ if (-not (Test-Path $Python)) {
     & $Python -m pip install -r requirements.txt
 }
 
-$args = @("main.py", "--stock-code", $StockCode)
-if ($CompanyName) { $args += @("--company-name", $CompanyName) }
-if ($StartDate)   { $args += @("--start-date", $StartDate) }
-if ($EndDate)     { $args += @("--end-date", $EndDate) }
-if ($MaxPages -gt 0) { $args += @("--max-pages", $MaxPages) }
+$args = @("download_parse_pdf.py", "--limit", "$Limit")
+if ($CompanyCode) { $args += @("--company-code", $CompanyCode) }
 if ($Verbose)     { $args += "--verbose" }
 
 & $Python @args

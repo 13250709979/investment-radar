@@ -8,10 +8,10 @@ from datetime import datetime
 
 from core.config import PARSER_NAME
 from entity.announcement_content import AnnouncementContent
-from parser.pdf_parser import parse_pdf
+from parser.pdf_text_parser import parse_pdf
 from repository.announcement_content_repository import AnnouncementContentRepository
 from repository.announcement_repository import AnnouncementRepository
-from utils.pdf_util import download_pdf
+from utils.pdf_download import download_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class PdfProcessResult:
     parse_failed: int = 0
 
 
-class PdfService:
+class PdfParseService:
     def __init__(self):
         self.announcement_repo = AnnouncementRepository()
         self.content_repo = AnnouncementContentRepository()

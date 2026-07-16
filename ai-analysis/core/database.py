@@ -1,4 +1,4 @@
-"""PostgreSQL ????????"""
+"""PostgreSQL 连接与健康检查。"""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def connect() -> PgConnection:
-    """????????????????"""
+    """打开一条连接（调用方负责关闭）。"""
     conn = psycopg2.connect(
         host=DB_HOST,
         port=DB_PORT,
@@ -32,7 +32,7 @@ def connect() -> PgConnection:
 
 @contextmanager
 def get_cursor(*, dict_cursor: bool = False) -> Iterator[PgCursor]:
-    """????????? commit??? rollback?"""
+    """获取游标：成功自动 commit，失败 rollback。"""
     conn = connect()
     cursor = conn.cursor(cursor_factory=RealDictCursor if dict_cursor else None)
     try:
@@ -46,7 +46,7 @@ def get_cursor(*, dict_cursor: bool = False) -> Iterator[PgCursor]:
         conn.close()
 
 
-# ????? get_cursor ??????????????
+# 写库事务与 get_cursor 相同（保留别名，兼容旧调用）
 transaction = get_cursor
 
 
@@ -54,10 +54,10 @@ def check_connection() -> bool:
     try:
         with get_cursor() as cur:
             cur.execute("SELECT 1")
-        logger.info("???????: %s/%s (schema=%s)", DB_HOST, DB_NAME, DB_SCHEMA)
+        logger.info("数据库连接成功: %s/%s (schema=%s)", DB_HOST, DB_NAME, DB_SCHEMA)
         return True
     except Exception as exc:
-        logger.error("???????: %s", exc)
+        logger.error("数据库连接失败: %s", exc)
         return False
 
 
@@ -73,10 +73,10 @@ def check_ai_analysis_table() -> bool:
             if cur.fetchone():
                 return True
         logger.error(
-            "? %s.ai_analysis ????????: .\\ai-analysis\\scripts\\init_db.ps1",
+            "表 %s.ai_analysis 不存在，请先执行: .\\ai-analysis\\scripts\\init_db.ps1",
             DB_SCHEMA,
         )
         return False
     except Exception as exc:
-        logger.error("?? ai_analysis ???: %s", exc)
+        logger.error("检查 ai_analysis 表失败: %s", exc)
         return False

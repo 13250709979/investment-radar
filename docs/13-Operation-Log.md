@@ -12,25 +12,25 @@ Investment Radar 项目操作手册与开发记录。
 
 ```powershell
 # 推荐：一键脚本
-.\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName 隆基绿能
+.\crawler\scripts\run_crawl_announcement.ps1 -StockCode 601012 -CompanyName 隆基绿能
 ```
 
 ```powershell
 # 等价：直接调用 Python
 cd crawler
-.\.venv\Scripts\python main.py --stock-code 601012 --company-name 隆基绿能
+.\.venv\Scripts\python crawl_announcement.py --stock-code 601012 --company-name 隆基绿能
 ```
 
 ### 带日期范围
 
 ```powershell
-.\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName 隆基绿能 -StartDate 2025-01-01 -EndDate 2026-07-13
+.\crawler\scripts\run_crawl_announcement.ps1 -StockCode 601012 -CompanyName 隆基绿能 -StartDate 2025-01-01 -EndDate 2026-07-13
 ```
 
 ### 测试（只抓 1 页）
 
 ```powershell
-.\crawler\scripts\run.ps1 -StockCode 601012 -CompanyName 隆基绿能 -MaxPages 1
+.\crawler\scripts\run_crawl_announcement.ps1 -StockCode 601012 -CompanyName 隆基绿能 -MaxPages 1
 ```
 
 ### PDF 下载解析
@@ -40,13 +40,13 @@ cd crawler
 .\crawler\scripts\init_content_db.ps1
 
 # 下载并解析 PDF（处理 pdf_download_status=0 的记录）
-.\crawler\scripts\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+.\crawler\scripts\run_download_parse_pdf.ps1 -CompanyCode 601012 -Limit 10
 ```
 
 ```powershell
 # 等价命令
 cd crawler
-.\.venv\Scripts\python main_pdf.py --company-code 601012 --limit 10
+.\.venv\Scripts\python download_parse_pdf.py --company-code 601012 --limit 10
 ```
 
 ### 首次运行前（只需一次）
@@ -97,11 +97,11 @@ cd crawler
 .\run.ps1 -StockCode 601012 -CompanyName 隆基绿能
 ```
 
-**方式 B：直接调用 main.py**
+**方式 B：直接调用 crawl_announcement.py**
 
 ```powershell
 cd crawler
-.\.venv\Scripts\python main.py --stock-code 601012 --company-name 隆基绿能
+.\.venv\Scripts\python crawl_announcement.py --stock-code 601012 --company-name 隆基绿能
 ```
 
 **常用参数**
@@ -148,21 +148,21 @@ docker exec -it postgres psql -U postgres -d investment_radar -c "SELECT company
 
 ```text
 crawler/
-├── main.py / main_pdf.py
+├── crawl_announcement.py / download_parse_pdf.py
 ├── requirements.txt
 ├── .env.example
 ├── core/
 │   ├── config.py
 │   └── database.py
 ├── scripts/
-│   ├── run.ps1
-│   ├── run_pdf.ps1
+│   ├── run_crawl_announcement.ps1
+│   ├── run_download_parse_pdf.ps1
 │   ├── init_db.ps1
 │   └── init_content_db.ps1
 ├── spider/
 │   └── cninfo_spider.py
 ├── parser/
-│   └── pdf_parser.py
+│   └── pdf_text_parser.py
 ├── entity/
 ├── service/
 ├── repository/
@@ -191,7 +191,7 @@ PyMuPDF 解析
 
 ```powershell
 .\crawler\scripts\init_content_db.ps1
-.\crawler\scripts\run_pdf.ps1 -CompanyCode 601012 -Limit 10
+.\crawler\scripts\run_download_parse_pdf.ps1 -CompanyCode 601012 -Limit 10
 ```
 
 **验证解析结果**
@@ -203,10 +203,10 @@ docker exec -it postgres psql -U postgres -d investment_radar -c "SELECT a.compa
 ### 1.7 采集流程
 
 ```text
-main.py / scripts/run.ps1
+crawl_announcement.py / scripts/run_crawl_announcement.ps1
     │
     ▼
-AnnouncementService
+CrawlService
     │
     ▼
 CnInfoSpider → 巨潮接口 → JSON
@@ -294,9 +294,9 @@ docker exec -it postgres psql -U postgres -d investment_radar -c "SELECT company
 | 修复 | Schema 从 `investment` 改为 `investment_radar` |
 | 修复 | orgId 从硬编码 `gssh0601012` 改为动态查询 `9900022338` |
 | 修复 | 请求参数简化为 `stock` + `pageNum` + `pageSize` |
-| 修复 | `AnnouncementService.__init__` 中 `company_name` 未定义 |
+| 修复 | `CrawlService.__init__` 中 `company_name` 未定义 |
 | 验证 | 601012 隆基绿能，抓取 30 条，入库 30 条 |
-| 新增 | PDF 下载解析：`main_pdf.py` + PyMuPDF |
+| 新增 | PDF 下载解析：`download_parse_pdf.py` + PyMuPDF |
 | 验证 | 601012 下载解析 2 条 PDF，parse_status=1 |
 
 ### 2026-07-14 AI 分析模块设计
