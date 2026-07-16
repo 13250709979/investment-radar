@@ -46,13 +46,34 @@ ON CONFLICT (announcement_id) DO UPDATE SET
     pdf_local_path = EXCLUDED.pdf_local_path,
     pdf_size = EXCLUDED.pdf_size,
     pdf_md5 = EXCLUDED.pdf_md5,
-    content = EXCLUDED.content,
-    page_count = EXCLUDED.page_count,
-    parser_name = EXCLUDED.parser_name,
-    parser_version = EXCLUDED.parser_version,
-    parse_status = EXCLUDED.parse_status,
-    parse_message = EXCLUDED.parse_message,
-    parse_time = EXCLUDED.parse_time,
+    content = CASE
+        WHEN announcement_content.parse_status = 1 THEN announcement_content.content
+        ELSE EXCLUDED.content
+    END,
+    page_count = CASE
+        WHEN announcement_content.parse_status = 1 THEN announcement_content.page_count
+        ELSE EXCLUDED.page_count
+    END,
+    parser_name = CASE
+        WHEN announcement_content.parse_status = 1 THEN announcement_content.parser_name
+        ELSE EXCLUDED.parser_name
+    END,
+    parser_version = CASE
+        WHEN announcement_content.parse_status = 1 THEN announcement_content.parser_version
+        ELSE EXCLUDED.parser_version
+    END,
+    parse_status = CASE
+        WHEN announcement_content.parse_status = 1 THEN announcement_content.parse_status
+        ELSE EXCLUDED.parse_status
+    END,
+    parse_message = CASE
+        WHEN announcement_content.parse_status = 1 THEN announcement_content.parse_message
+        ELSE EXCLUDED.parse_message
+    END,
+    parse_time = CASE
+        WHEN announcement_content.parse_status = 1 THEN announcement_content.parse_time
+        ELSE EXCLUDED.parse_time
+    END,
     update_time = EXCLUDED.update_time
 """
 

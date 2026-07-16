@@ -95,17 +95,35 @@ class AnnouncementRepository:
     def find_pending_pdf(
         self, limit: int = 50, company_code: Optional[str] = None
     ) -> List[PendingAnnouncement]:
+        """未下载成功，或已下载但未解析成功的公告（已全部成功的不返回）。"""
         sql = """
-            SELECT id, announcement_id, company_code, company_name,
-                   title, adjunct_url, adjunct_size, publish_time
-            FROM announcement
-            WHERE pdf_download_status = 0 AND deleted = FALSE
+            SELECT
+                a.id,
+                a.announcement_id,
+                a.company_code,
+                a.company_name,
+                a.title,
+                a.adjunct_url,
+                a.adjunct_size,
+                a.publish_time,
+                a.pdf_download_status,
+                c.pdf_local_path,
+                c.parse_status
+            FROM announcement a
+            LEFT JOIN announcement_content c ON c.announcement_id = a.id
+            WHERE a.deleted = FALSE
+              AND a.adjunct_url IS NOT NULL
+              AND TRIM(a.adjunct_url) <> ''
+              AND NOT (
+                    a.pdf_download_status = 1
+                    AND c.parse_status = 1
+              )
         """
         params: list = []
         if company_code:
-            sql += " AND company_code = %s"
+            sql += " AND a.company_code = %s"
             params.append(company_code)
-        sql += " ORDER BY publish_time DESC LIMIT %s"
+        sql += " ORDER BY a.publish_time DESC LIMIT %s"
         params.append(limit)
 
         with get_cursor(dict_cursor=True) as cursor:
@@ -122,6 +140,9 @@ class AnnouncementRepository:
                 adjunct_url=row["adjunct_url"],
                 adjunct_size=row["adjunct_size"],
                 publish_time=row["publish_time"],
+                pdf_download_status=row["pdf_download_status"] or 0,
+                pdf_local_path=row["pdf_local_path"],
+                parse_status=row["parse_status"],
             )
             for row in rows
         ]

@@ -44,6 +44,7 @@ def main():
     print("=" * 50)
     print(f"待处理   : {result.total}")
     print(f"成功     : {result.success}")
+    print(f"跳过     : {result.skipped}")
     print(f"下载失败 : {result.download_failed}")
     print(f"解析失败 : {result.parse_failed}")
     print("=" * 50)
